@@ -37,3 +37,12 @@ class Asiento(BaseModel):
         
         params = (id_funcion, id_funcion)
         return self._execute(query, params, fetch=True)
+    
+    def exists(self, id_sala, fila, numero):
+        q = """
+            SELECT COUNT(*) AS cant
+            FROM Asientos
+            WHERE id_sala = %s AND fila = %s AND numero_asiento = %s
+        """
+        result = self._execute(q, (id_sala, fila, numero))
+        return result["cant"] > 0

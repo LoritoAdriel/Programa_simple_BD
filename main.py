@@ -10,6 +10,7 @@ from models.cliente import Cliente
 from models.venta import Venta
 from models.tarifa import Tarifa
 from models.entrada import Entrada
+from models.validaciones import input_entero, input_fecha, input_hora, input_id_valido, input_no_vacio, input_opcion, input_valoracion, input_dni
 
 from datetime import date
 
@@ -51,9 +52,9 @@ def menu_cines():
         print("0. Volver")
         op = input("Opción: ")
         if op == '1':
-            nombre = input("Nombre: ")
-            direccion = input("Dirección: ")
-            cuit = input("CUIT: ")
+            nombre = input_no_vacio("Nombre: ")
+            direccion = input_no_vacio("Dirección: ")
+            cuit = input_entero("CUIT: ")
             cine_m.create(nombre, direccion, cuit)
         elif op == '2':
             for c in cine_m.list_all():
@@ -73,10 +74,13 @@ def menu_sucursales():
         print("0. Volver")
         op = input("Opción: ")
         if op == '1':
-            nombre = input("Nombre: ")
-            direccion = input("Dirección: ")
-            numero = input("Número sucursal: ")
-            id_cine = input("ID cine: ")
+            nombre = input_no_vacio("Nombre: ")
+            direccion = input_no_vacio("Dirección: ")
+            numero = input_entero("Número sucursal: ")
+
+            ids_cine = [c["id_cine"] for c in cine_m.list_all()]
+            id_cine = input_id_valido("ID cine: ", ids_cine)
+
             sucursal_m.create(nombre, direccion, numero, id_cine)
         elif op == '2':
             for s in sucursal_m.list_all():
@@ -96,10 +100,13 @@ def menu_salas():
         print("0. Volver")
         op = input("Opción: ")
         if op == '1':
-            id_sucursal = input("ID Sucursal: ")
-            numero_sala = input("Número de sala: ")
-            capacidad = input("Capacidad: ")
-            tipo = input("Tipo (2D/3D/4D): ")
+            ids_sucursal = [s["id_sucursal"] for s in sucursal_m.list_all()]
+            id_sucursal = input_id_valido("ID Sucursal: ", ids_sucursal)
+
+            numero_sala = input_entero("Número de sala: ")
+            capacidad = input_entero("Capacidad: ")
+            tipo = input_opcion("Tipo (2D/3D/4D): ", ["2D", "3D", "4D"])
+
             sala_m.create(id_sucursal, numero_sala, capacidad, tipo)
         elif op == '2':
             for s in sala_m.list_all():
@@ -119,9 +126,19 @@ def menu_asientos():
         print("0. Volver")
         op = input("Opción: ")
         if op == '1':
-            id_sala = input("ID sala: ")
-            fila = input("Fila (A-Z): ")
-            num = input("Número asiento: ")
+            ids_salas = [s["id_sala"] for s in sala_m.list_all()]
+            id_sala = input_id_valido("ID sala: ", ids_salas)
+            
+            fila = input("Fila (A-Z): ").upper()
+            if not (len(fila) == 1 and 'A' <= fila <= 'Z'):
+                print("La fila debe ser una letra entre A y Z.")
+                continue
+            
+            num = input_entero("Número asiento: ")
+            
+            if asiento_m.exists(id_sala, fila, num):
+                print("Ya existe un asiento en esa sala con esa fila y número.")
+                continue
             asiento_m.create(id_sala, fila, num)
         elif op == '2':
             for a in asiento_m.list_all():
@@ -141,13 +158,13 @@ def menu_peliculas():
         print("0. Volver")
         op = input("Opción: ")
         if op == '1':
-            titulo = input("Título: ")
-            reparto = input("Reparto: ")
-            sinopsis = input("Sinopsis: ")
-            dur = input("Duración: ")
-            genero = input("Género: ")
-            clasif = input("Clasificación: ")
-            val = input("Valoración (0-5): ")
+            titulo = input_no_vacio("Título: ")
+            reparto = input_no_vacio("Reparto: ")
+            sinopsis = input_no_vacio("Sinopsis: ")
+            dur = input_entero("Duración (minutos): ")
+            genero = input_no_vacio("Género: ")
+            clasif = input_no_vacio("Clasificación: ")
+            val = input_valoracion("Valoración (0-5): ")
             pelicula_m.create(titulo, reparto, sinopsis, dur, genero, clasif, val)
         elif op == '2':
             for p in pelicula_m.list_all():
@@ -167,11 +184,15 @@ def menu_funciones():
         print("0. Volver")
         op = input("Opción: ")
         if op == '1':
-            id_p = input("ID película: ")
-            id_s = input("ID sala: ")
-            fecha = input("Fecha (YYYY-MM-DD): ")
-            h_ini = input("Hora inicio (HH:MM): ")
-            h_fin = input("Hora fin (HH:MM): ")
+            ids_pelis = [p["id_pelicula"] for p in pelicula_m.list_all()]
+            id_p = input_id_valido("ID película: ", ids_pelis)
+
+            ids_salas = [s["id_sala"] for s in sala_m.list_all()]
+            id_s = input_id_valido("ID sala: ", ids_salas)
+
+            fecha = input_fecha("Fecha (YYYY-MM-DD): ")
+            h_ini = input_hora("Hora inicio (HH:MM): ")
+            h_fin = input_hora("Hora fin (HH:MM): ")
             funcion_m.create(id_p, id_s, fecha, h_ini, h_fin)
         elif op == '2':
             for f in funcion_m.list_all():
@@ -191,12 +212,12 @@ def menu_clientes():
         print("0. Volver")
         op = input("Opción: ")
         if op == '1':
-            nom = input("Nombre: ")
-            ape = input("Apellido: ")
-            dni = input("DNI: ")
-            fn = input("Fecha nacimiento (YYYY-MM-DD): ")
-            tel = input("Teléfono: ")
-            mail = input("Email: ")
+            nom = input_no_vacio("Nombre: ")
+            ape = input_no_vacio("Apellido: ")
+            dni = input_dni()
+            fn = input_fecha("Fecha nacimiento (YYYY-MM-DD): ")
+            tel = input_entero("Teléfono: ")
+            mail = input_no_vacio("Email: ")
             cliente_m.create(nom, ape, dni, fn, tel, mail)
         elif op == '2':
             for c in cliente_m.list_all():
@@ -216,11 +237,13 @@ def menu_tarifas():
         print("0. Volver")
         op = input("Opción: ")
         if op == '1':
-            nombre = input("Nombre tarifa: ")
-            precio = input("Precio fijo: ")
-            desc = input("Valor descuento: ")
-            tipo = input("Tipo descuento (Porcentual/Fijo): ")
-            cat = input("Categoría base: ")
+            nombre = input_no_vacio("Nombre tarifa: ")
+            precio = input_entero("Precio fijo: ")
+            desc = input_entero("Valor descuento: ")
+            tipo = input_opcion("Tipo descuento (Porcentual/Fijo): ",
+                                ["Porcentual", "Fijo"])
+            cat = input_opcion("Categoría base (Menor/Adulto/Jubilado): ",
+                                ["Menor", "Adulto", "Jubilado"])
             tarifa_m.create(nombre, precio, desc, tipo, cat)
         elif op == '2':
             for t in tarifa_m.list_all():
@@ -240,9 +263,13 @@ def menu_ventas():
         print("0. Volver")
         op = input("Opción: ")
         if op == '1':
-            id_cliente = input("ID cliente: ")
-            total = input("Total: ")
-            pago = input("Tipo pago('Efectivo', 'Tarjeta', 'Transferencia'): ")
+            ids_cliente = [s["id_cliente"] for s in cliente_m.list_all()]
+            id_cliente = input_id_valido("ID cliente: ", ids_cliente)
+            total = input_entero("Total: ")
+            pago = input_opcion(
+                "Tipo pago (Efectivo/Tarjeta/Transferencia): ",
+                ["Efectivo", "Tarjeta", "Transferencia"]
+            )
             venta_m.create(id_cliente, date.today(), total, pago)
         elif op == '2':
             for v in venta_m.list_all():
@@ -262,11 +289,16 @@ def menu_entradas():
         print("0. Volver")
         op = input("Opción: ")
         if op == '1':
-            id_venta = input("ID venta: ")
-            id_funcion = input("ID función: ")
-            id_asiento = input("ID asiento: ")
-            id_tarifa = input("ID tarifa: ")
-            precio = input("Precio final: ")
+            ids_venta = [c["id_venta"] for c in venta_m.list_all()]
+            id_venta = input_id_valido("ID venta: ", ids_venta)
+            ids_funcion = [c["id_funcion"] for c in funcion_m.list_all()]
+            id_funcion = input_id_valido("ID función: ", ids_funcion)
+            ids_asiento = [c["id_asiento"] for c in asiento_m.list_all()]
+            id_asiento = input_id_valido("ID asiento: ", ids_asiento)
+            ids_tarifa = [c["id_tarifa"] for c in tarifa_m.list_all()]
+            id_tarifa = input_id_valido("ID tarifa: ", ids_tarifa)
+            tarifa = tarifa_m.get_by_id(id_tarifa)
+            precio = tarifa["precio_fijo"]
             entrada_m.create(id_venta, id_funcion, id_asiento, id_tarifa, precio)
         elif op == '2':
             for e in entrada_m.list_all():
@@ -317,7 +349,7 @@ def actualizar_generico(modelo, id_campo):
     
     
 # -----------------------------
-# MODIFICAR REGISTRO
+# EMULAR COMPRA
 # -----------------------------
 
 def menu_compra():
@@ -334,7 +366,7 @@ def menu_compra():
     id_sucursal = input("Seleccione sucursal: ")
 
     # ------------------------------
-    # 2. Películas disponibles en esa sucursal
+    # 2. Películas disponibles
     # ------------------------------
     peliculas = sucursal_m.get_peliculas_disponibles(id_sucursal)
     print("\nPelículas disponibles:")
@@ -347,7 +379,6 @@ def menu_compra():
     # 3. Funciones disponibles
     # ------------------------------
     funciones = funcion_m.get_funciones(id_pelicula, id_sucursal)
-
     print("\nFunciones disponibles:")
     for f in funciones:
         print(f"{f['id_funcion']}. Sala {f['numero_sala']} - {f['fecha']} {f['hora_inicio']}")
@@ -355,18 +386,25 @@ def menu_compra():
     id_funcion = input("Seleccione función: ")
 
     # ------------------------------
-    # 4. Asientos disponibles
+    # 4. Selección de múltiples asientos
     # ------------------------------
-    asientos = asiento_m.get_disponibles(id_funcion)
+    asientos_seleccionados = []
 
-    print("\nAsientos disponibles:")
-    for a in asientos:
-        print(f"{a['id_asiento']} - Fila {a['fila']} Asiento {a['numero_asiento']}")
+    while True:
+        asientos = asiento_m.get_disponibles(id_funcion)
+        print("\nAsientos disponibles:")
+        for a in asientos:
+            print(f"{a['id_asiento']} - Fila {a['fila']} Asiento {a['numero_asiento']}")
 
-    id_asiento = input("Seleccione asiento: ")
+        id_asiento = input("Seleccione asiento: ")
+        asientos_seleccionados.append(id_asiento)
+
+        seguir = input("¿Desea elegir otro asiento? (s/n): ").lower()
+        if seguir != "s":
+            break
 
     # ------------------------------
-    # 5. Elegir Tarifa
+    # 5. Elegir tarifa (una para todos)
     # ------------------------------
     tarifas = tarifa_m.list_all()
     print("\nTarifas:")
@@ -374,9 +412,11 @@ def menu_compra():
         print(f"{t['id_tarifa']}. {t['nombre']} – ${t['precio_fijo']}")
 
     id_tarifa = input("Seleccione tarifa: ")
+    tarifa = tarifa_m.get_by_id(id_tarifa)
+    precio_unitario = tarifa["precio_fijo"]
 
     # ------------------------------
-    # 6. Cliente (registrar o recuperar)
+    # 6. Cliente
     # ------------------------------
     dni = input("Ingrese DNI: ")
     cliente = cliente_m.get_by_dni(dni)
@@ -389,32 +429,30 @@ def menu_compra():
 
         cliente_m.create(nombre, apellido, dni, None, None, email)
         cliente = cliente_m.get_by_dni(dni)
-        id_cliente = cliente['id_cliente']
-    else:
-        id_cliente = cliente['id_cliente']
+
+    id_cliente = cliente["id_cliente"]
 
     # ------------------------------
-    # 7. Crear Venta
+    # 7. Pago (al final)
     # ------------------------------
+    total = precio_unitario * len(asientos_seleccionados)
+    print(f"\nTotal a pagar por {len(asientos_seleccionados)} entrada(s): ${total}")
+
+    tipo_pago = input("Tipo de pago (Efectivo/Tarjeta/Transferencia): ")
+
+    # Crear la venta
     hoy = date.today()
-    tarifa = tarifa_m.get_by_id(id_tarifa)
-    precio = tarifa["precio_fijo"]
-    
-    tipo_pago = input("Tipo de pago ('Efectivo', 'Tarjeta', 'Transferencia'): ")
-    venta_m.create(id_cliente, hoy, precio, tipo_pago)
+    venta_m.create(id_cliente, hoy, total, tipo_pago)
     id_venta = venta_m.list_end_id()
 
     # ------------------------------
-    # 8. Crear Entrada
+    # 8. Crear las entradas y bloquear asientos
     # ------------------------------
-    entrada_m.create(id_venta, id_funcion, id_asiento, id_tarifa, precio)
+    for id_asiento in asientos_seleccionados:
+        entrada_m.create(id_venta, id_funcion, id_asiento, id_tarifa, precio_unitario)
+        asiento_m.update(id_asiento, {"estado": "no disponible"})
 
-    # ------------------------------
-    # 9. Bloquear Asiento
-    # ------------------------------
-    asiento_m.update(id_asiento, {"estado": "no disponible"})
-
-    print("\n Compra realizada con éxito!")
+    print("\n¡Compra realizada con éxito!")
 
 
 # -----------------------------

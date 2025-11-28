@@ -22,7 +22,7 @@ class Sucursal(BaseModel):
         
     def get_peliculas_disponibles(self, id_sucursal):
         query = """
-            SELECT DISTINCT p.*
+            SELECT DISTINCT *
             FROM Peliculas p
             JOIN Funciones f ON p.id_pelicula = f.id_pelicula
             JOIN Salas s ON f.id_sala = s.id_sala
